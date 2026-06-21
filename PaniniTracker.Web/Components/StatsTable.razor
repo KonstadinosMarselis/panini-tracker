@@ -1,0 +1,42 @@
+﻿@using PaniniTracker.Core.Models
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Ομάδα</th>
+                <th>Έχεις</th>
+                <th>Σύνολο</th>
+                <th>Λείπουν</th>
+                <th>%</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (Rows.Count == 0)
+            {
+                <tr>
+                    <td colspan="5" class="empty">Δεν υπάρχουν στατιστικά.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var row in Rows)
+                {
+                    <tr>
+                        <td>@row.Group</td>
+                        <td>@row.Owned</td>
+                        <td>@row.Total</td>
+                        <td>@row.Missing</td>
+                        <td>@row.CompletionPercentage.ToString("F1")%</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    public List<GroupStatsRow> Rows { get; set; } = new();
+}

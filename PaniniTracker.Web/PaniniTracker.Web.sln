@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36221.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaniniTracker.Web", "PaniniTracker.Web.csproj", "{7E80AC52-D835-4802-8BB0-EED534CFEC43}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaniniTracker.Core", "..\PaniniTracker.Core\PaniniTracker.Core.csproj", "{1C82259A-33E3-49FF-9E8B-06D41084BB0F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7E80AC52-D835-4802-8BB0-EED534CFEC43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E80AC52-D835-4802-8BB0-EED534CFEC43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E80AC52-D835-4802-8BB0-EED534CFEC43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E80AC52-D835-4802-8BB0-EED534CFEC43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C82259A-33E3-49FF-9E8B-06D41084BB0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C82259A-33E3-49FF-9E8B-06D41084BB0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C82259A-33E3-49FF-9E8B-06D41084BB0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C82259A-33E3-49FF-9E8B-06D41084BB0F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {37C53642-E2F7-4E10-A906-AA51B851AAB4}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,438 @@
+﻿@page "/"
+@using PaniniTracker.Core.Models
+@using PaniniTracker.Core.Services
+@using PaniniTracker.Web.Services
+@inject CollectionService Collection
+@inject BrowserStorageService Storage
+@inject IJSRuntime JS
+@using Microsoft.JSInterop
+
+<PageTitle>Panini Tracker</PageTitle>
+
+<div class="app-shell">
+    <header class="hero">
+        <div>
+            <h1>Panini FIFA World Cup 2026 Tracker</h1>
+            <p>Διαχείριση συλλογής, ελλείψεων, σελίδων και στατιστικών</p>
+        </div>
+
+        <div class="hero-stat">
+            Συλλογή: @Summary.Owned / @Summary.Total
+        </div>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(Message))
+    {
+        <div class="message">
+            @Message
+        </div>
+    }
+
+    <section class="cards">
+        <div class="card">
+            <span>Σύνολο άλμπουμ</span>
+            <strong>@Summary.Total</strong>
+        </div>
+
+        <div class="card">
+            <span>Συλλογή</span>
+            <strong>@Summary.Owned</strong>
+        </div>
+
+        <div class="card">
+            <span>Ελλείποντα</span>
+            <strong>@Summary.Missing</strong>
+        </div>
+
+        <div class="card">
+            <span>Ολοκλήρωση</span>
+            <strong>@Summary.CompletionPercentage.ToString("F1")%</strong>
+        </div>
+    </section>
+
+    <section class="panel">
+        <label>Εισαγωγή κωδικών</label>
+
+        <textarea @bind="InputText"
+                  placeholder="π.χ. ARG1 ARG2 FWC5 ή ARG1-ARG20"></textarea>
+
+        <div class="actions">
+            <button @onclick="AddOwned">Καταχώριση αυτοκόλλητων</button>
+            <button class="danger" @onclick="RemoveOwned">Αφαίρεση αυτοκόλλητων</button>
+            <button class="secondary" @onclick="ClearInput">Καθαρισμός</button>
+        </div>
+    </section>
+
+    <section class="panel">
+        <label>Εισαγωγή λίστας άλμπουμ (.txt / .csv)</label>
+
+        <InputFile OnChange="ImportAlbumFile" />
+
+        <small>
+            Μορφή: 3 | FWC1-FWC3, 8 | MEX, 12 | ARG
+        </small>
+    </section>
+
+    <section class="panel">
+        <label>Ομαδική εισαγωγή αυτοκόλλητων από αρχείο (.txt / .csv)</label>
+
+        <InputFile OnChange="ImportOwnedFile" />
+
+        <small>
+            Μορφή: ARG1 ARG2 MEX5 FWC10 ή ARG1-ARG20
+        </small>
+    </section>
+
+    <section class="panel">
+        <label>Εισαγωγή διπλών από αρχείο (.txt / .csv)</label>
+
+        <InputFile OnChange="ImportDuplicatesFile" />
+
+        <small>
+            Μορφή: ARG2 ARG2 ARG2 MEX5 MEX5
+        </small>
+    </section>
+
+    <section class="filters">
+        <input value="@SearchText"
+               @oninput="SearchChanged"
+               placeholder="Αναζήτηση κωδικού..." />
+
+        <select value="@SelectedGroup"
+                @onchange="GroupChanged">
+            @foreach (var group in Groups)
+            {
+                <option value="@group">@group</option>
+            }
+        </select>
+
+        <select value="@SortMode"
+                @onchange="SortChanged">
+            <option>Σελίδα</option>
+            <option>Ομάδα / Κωδικός</option>
+        </select>
+    </section>
+
+    <section class="tabs">
+        <button class="@TabClass("missing")" @onclick='() => ActiveTab = "missing"'>
+            Υπόλοιπο Συλλογής (@MissingRows.Count)
+        </button>
+
+        <button class="@TabClass("owned")" @onclick='() => ActiveTab = "owned"'>
+            Συλλογή (@OwnedRows.Count)
+        </button>
+
+        <button class="@TabClass("ignored")" @onclick='() => ActiveTab = "ignored"'>
+            Μη αναγνωρισμένοι (@IgnoredRows.Count)
+        </button>
+
+        <button class="@TabClass("stats")" @onclick='() => ActiveTab = "stats"'>
+            Στατιστικά
+        </button>
+
+        <button class="@TabClass("duplicates")" @onclick='() => ActiveTab = "duplicates"'>
+            Διπλά (@Collection.GetTotalDuplicates())
+        </button>
+    </section>
+
+    @if (ActiveTab == "missing")
+    {
+        <StickerTable Rows="MissingRows" />
+    }
+    else if (ActiveTab == "owned")
+    {
+        <StickerTable Rows="OwnedRows" CanRemove="true" OnRemove="RemoveSingleOwned" />
+    }
+    else if (ActiveTab == "ignored")
+    {
+        <StickerTable Rows="IgnoredRows" />
+    }
+    else if (ActiveTab == "stats")
+    {
+        <section class="stats-grid">
+            <div class="panel">
+                <h2>Ποσοστό ολοκλήρωσης ανά ομάδα</h2>
+                <StatsTable Rows="GroupStats" />
+            </div>
+
+            <div class="panel">
+                <h2>Top 5 κοντά στην ολοκλήρωση</h2>
+                <StatsTable Rows="Top5Stats" />
+            </div>
+        </section>
+    }
+    else if (ActiveTab == "duplicates")
+    {
+        <DuplicateTable Rows="DuplicateRows" />
+    }
+
+    <section class="panel">
+
+        <div class="actions">
+
+            <button class="warning" @onclick="ExportMissing">
+                Εξαγωγή λίστας ελλείψεων
+            </button>
+
+            <button class="secondary" @onclick="ExportBackup">
+                Εξαγωγή συλλογής JSON
+            </button>
+
+        </div>
+
+        <div style="margin-top:12px">
+
+            <label>Εισαγωγή συλλογής JSON</label>
+
+            <InputFile OnChange="ImportBackupFile" />
+
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(ExportText))
+        {
+            <textarea readonly class="export-box">@ExportText</textarea>
+        }
+
+    </section>
+</div>
+
+@code {
+    private const string StorageKey = "panini_save";
+
+    private string InputText = "";
+    private string SearchText = "";
+    private string SelectedGroup = "ΟΛΑ";
+    private string SortMode = "Σελίδα";
+    private string ActiveTab = "missing";
+    private string Message = "";
+    private string ExportText = "";
+
+    private CollectionSummary Summary = new();
+    private List<string> Groups = new() { "ΟΛΑ" };
+
+    private List<StickerRow> MissingRows = new();
+    private List<StickerRow> OwnedRows = new();
+    private List<StickerRow> IgnoredRows = new();
+
+    private List<GroupStatsRow> GroupStats = new();
+    private List<GroupStatsRow> Top5Stats = new();
+    private List<DuplicateStickerRow> DuplicateRows = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var data = await Storage.LoadAsync<SaveData>(StorageKey);
+
+        if (data is not null)
+        {
+            Collection.LoadData(data);
+        }
+
+        Refresh();
+    }
+
+    private async Task ImportAlbumFile(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        await using var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 5);
+        using var reader = new StreamReader(stream);
+
+        var text = await reader.ReadToEndAsync();
+
+        Collection.ImportAlbumList(text);
+
+        await SaveAsync();
+
+        Message = $"Έγινε εισαγωγή λίστας άλμπουμ. Συνολικοί κωδικοί: {Collection.AllStickers.Count}";
+
+        Refresh();
+    }
+    private async Task ImportOwnedFile(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        await using var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 5);
+        using var reader = new StreamReader(stream);
+
+        var text = await reader.ReadToEndAsync();
+
+        var result = Collection.AddOwnedCodes(text);
+
+        await SaveAsync();
+
+        Message =
+            $"Ομαδική εισαγωγή από αρχείο: " +
+            $"Νέα αυτοκόλλητα: {result.Added} | " +
+            $"Ήδη υπήρχαν: {result.Duplicates} | " +
+            $"Μη αναγνωρισμένοι: {result.Unknown}";
+
+        Refresh();
+    }
+    private async Task AddOwned()
+    {
+        var result = Collection.AddOwnedCodes(InputText);
+
+        await SaveAsync();
+
+        Message =
+            $"Νέα αυτοκόλλητα: {result.Added} | " +
+            $"Ήδη υπήρχαν: {result.Duplicates} | " +
+            $"Μη αναγνωρισμένοι: {result.Unknown}";
+
+        Refresh();
+    }
+
+    private async Task RemoveOwned()
+    {
+        var removed = Collection.RemoveOwnedCodes(InputText);
+
+        await SaveAsync();
+
+        Message = $"Αφαιρέθηκαν {removed} αυτοκόλλητα.";
+
+        Refresh();
+    }
+
+    private async Task RemoveSingleOwned(string code)
+    {
+        Collection.RemoveOwnedCode(code);
+
+        await SaveAsync();
+
+        Message = $"Αφαιρέθηκε το {code} από τη συλλογή.";
+
+        Refresh();
+    }
+
+    private void ClearInput()
+    {
+        InputText = "";
+        Message = "";
+    }
+    private void SearchChanged(ChangeEventArgs e)
+    {
+        SearchText = e.Value?.ToString() ?? "";
+        Refresh();
+    }
+
+    private void GroupChanged(ChangeEventArgs e)
+    {
+        SelectedGroup = e.Value?.ToString() ?? "ΟΛΑ";
+        Refresh();
+    }
+
+    private void SortChanged(ChangeEventArgs e)
+    {
+        SortMode = e.Value?.ToString() ?? "Σελίδα";
+        Refresh();
+    }
+    private async Task ExportMissing()
+    {
+        ExportText = Collection.ExportMissingText();
+
+        await JS.InvokeVoidAsync(
+            "downloadFile",
+            "missing_stickers.txt",
+            ExportText,
+            "text/plain");
+
+        Message = "Η λίστα ελλείψεων αποθηκεύτηκε.";
+    }
+
+    private async Task SaveAsync()
+    {
+        await Storage.SaveAsync(StorageKey, Collection.GetSaveData());
+    }
+
+    private void Refresh()
+    {
+        Summary = Collection.GetSummary();
+
+        Groups = Collection.GetGroups();
+
+        if (!Groups.Contains(SelectedGroup))
+            SelectedGroup = "ΟΛΑ";
+
+        MissingRows = Collection.GetMissingRows(SearchText, SelectedGroup, SortMode);
+        OwnedRows = Collection.GetOwnedRows(SearchText, SelectedGroup, SortMode);
+        IgnoredRows = Collection.GetIgnoredRows(SearchText, SelectedGroup, SortMode);
+        DuplicateRows = Collection.GetDuplicateRows(SearchText, SelectedGroup, SortMode);
+
+        GroupStats = Collection.GetGroupStats();
+        Top5Stats = Collection.GetTop5ClosestGroups();
+    }
+
+    private string TabClass(string tab)
+    {
+        return ActiveTab == tab ? "active" : "";
+    }
+    private async Task ExportBackup()
+    {
+        var data = Collection.GetSaveData();
+
+        var json = System.Text.Json.JsonSerializer.Serialize(
+            data,
+            new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+        await JS.InvokeVoidAsync(
+            "downloadFile",
+            "panini_backup.json",
+            json,
+            "application/json");
+
+        Message = "Το backup δημιουργήθηκε.";
+    }
+    private async Task ImportBackupFile(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        await using var stream = file.OpenReadStream(5 * 1024 * 1024);
+
+        using var reader = new StreamReader(stream);
+
+        var json = await reader.ReadToEndAsync();
+
+        var data = System.Text.Json.JsonSerializer.Deserialize<SaveData>(json);
+
+        if (data is null)
+            return;
+
+        Collection.LoadData(data);
+
+        await SaveAsync();
+
+        Message = "Η συλλογή εισήχθη επιτυχώς.";
+
+        Refresh();
+    }
+
+    private async Task ImportDuplicatesFile(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        await using var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 5);
+
+        using var reader = new StreamReader(stream);
+
+        var text = await reader.ReadToEndAsync();
+
+        var codes = CollectionService.ParseDuplicateCodes(text);
+
+        foreach (var code in codes)
+        {
+            if (!Collection.DuplicateStickers.ContainsKey(code))
+                Collection.DuplicateStickers[code] = 0;
+
+            Collection.DuplicateStickers[code]++;
+        }
+
+        await SaveAsync();
+
+        Message = $"Έγινε εισαγωγή διπλών. Σύνολο διπλών: {Collection.GetTotalDuplicates()}";
+
+        Refresh();
+    }
+}

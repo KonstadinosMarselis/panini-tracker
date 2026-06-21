@@ -1,0 +1,132 @@
+﻿@using PaniniTracker.Core.Models
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th class="sortable" @onclick="TogglePageSort">
+                    Page @PageIndicator
+                </th>
+
+                <th class="sortable" @onclick="ToggleCodeSort">
+                    Code @CodeIndicator
+                </th>
+
+                @if (CanRemove)
+                {
+                    <th></th>
+                }
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (SortedRows.Count == 0)
+            {
+                <tr>
+                    <td colspan="3" class="empty">Δεν υπάρχουν εγγραφές.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var row in SortedRows)
+                {
+                    <tr>
+                        <td>@row.Page</td>
+
+                        <td>@row.Code</td>
+
+                        @if (CanRemove)
+                        {
+                            <td class="right">
+                                <button class="danger small"
+                                        @onclick="() => OnRemove.InvokeAsync(row.Code)">
+                                    Αφαίρεση
+                                </button>
+                            </td>
+                        }
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+
+    [Parameter]
+    public List<StickerRow> Rows { get; set; } = new();
+
+    [Parameter]
+    public bool CanRemove { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnRemove { get; set; }
+
+    private List<StickerRow> SortedRows = new();
+
+    private string SortColumn = "Page";
+    private bool Ascending = true;
+
+    private string PageIndicator =>
+        SortColumn == "Page"
+            ? (Ascending ? "▲" : "▼")
+            : "";
+
+    private string CodeIndicator =>
+        SortColumn == "Code"
+            ? (Ascending ? "▲" : "▼")
+            : "";
+
+    protected override void OnParametersSet()
+    {
+        ApplySort();
+    }
+
+    private void TogglePageSort()
+    {
+        if (SortColumn == "Page")
+            Ascending = !Ascending;
+        else
+        {
+            SortColumn = "Page";
+            Ascending = true;
+        }
+
+        ApplySort();
+    }
+
+    private void ToggleCodeSort()
+    {
+        if (SortColumn == "Code")
+            Ascending = !Ascending;
+        else
+        {
+            SortColumn = "Code";
+            Ascending = true;
+        }
+
+        ApplySort();
+    }
+
+    private void ApplySort()
+    {
+        IEnumerable<StickerRow> query = Rows;
+
+        if (SortColumn == "Page")
+        {
+            query = Ascending
+                ? query.OrderBy(x => x.Page)
+                       .ThenBy(x => x.Code)
+                : query.OrderByDescending(x => x.Page)
+                       .ThenByDescending(x => x.Code);
+        }
+        else
+        {
+            query = Ascending
+                ? query.OrderBy(x => x.Code)
+                : query.OrderByDescending(x => x.Code);
+        }
+
+        SortedRows = query.ToList();
+    }
+}
