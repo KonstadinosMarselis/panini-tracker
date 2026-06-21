@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "PaniniTracker.Web",
   "resources": {
-    "hash": "sha256-qQddOaryyi4hHFsd4zQd8+Cvkw1S/mHyowpH0d56xDY=",
+    "hash": "sha256-Sg5f96eLx9m0kxoCYPhu4HkcLKXNQlhss5saY+LGrds=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-YDHEHpc+/PUWFYa9BMCN3EcVlpemjKD024swcpPfMIQ="
     },
@@ -33,8 +33,8 @@
       "Microsoft.Extensions.Primitives.wasm": "sha256-Bi1hyBMWneH/ByWbqT/pNe0B7I/NQFklzD2g3Whdqlk=",
       "Microsoft.JSInterop.WebAssembly.wasm": "sha256-a+efVLD7FPKFKpE1X2rFnlYPOwZToJnvjYU3hBSBB2Y=",
       "Microsoft.JSInterop.wasm": "sha256-eFnGX/7cxs9RakyJvPXSFb0N9olU4RObKqjg99qh8Io=",
-      "PaniniTracker.Core.wasm": "sha256-wNYHbWFOG77U6tXl5RIP9lzvp9mBq0HvLSwRHwFUiws=",
-      "PaniniTracker.Web.wasm": "sha256-y1HjS4kAxEh4035EannCeJtJNdwBiHWF8IuNzDBeAqA=",
+      "PaniniTracker.Core.wasm": "sha256-icQs0zMZsk2go1IiraLewir3q+M3rSSGPirh38hnpCk=",
+      "PaniniTracker.Web.wasm": "sha256-eYA4v/cEysFjg34Y8IVR8CJp2q67LqwzcILz9z7PcRA=",
       "System.Collections.Concurrent.wasm": "sha256-xmSkyXwJMFreJXRlVY+QpHu0WH2ONNqzGY/5JB2Bsis=",
       "System.Collections.wasm": "sha256-mNkVPQYq4J4Pd3D0Qp1EzFe0ekSUyB/TDbuyBvGbcmQ=",
       "System.ComponentModel.wasm": "sha256-0oHbPR0RV7vGMzYQIJ+1DMlNG0AXVo1JcxGBP4qj57M=",
